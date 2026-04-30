@@ -9,26 +9,23 @@ class Tools:
     @staticmethod
     def auth_headers(token: str):
         cleaned = token.strip()
-        return [{"Authorization": cleaned}, {"Authorization": f"Bot {cleaned}"}]
+        # Only Self-bot headers (no "Bot " prefix)
+        return {"Authorization": cleaned}
 
     @staticmethod
     def request_with_auth(method: str, url: str, token: str, **kwargs):
         base_headers = kwargs.pop("headers", {})
-        for headers in Tools.auth_headers(token):
-            merged_headers = {**headers, **base_headers}
-            response = req.request(method, url, headers=merged_headers, **kwargs)
-            if response.status_code != 401:
-                return response, merged_headers
-        fallback_headers = {**Tools.auth_headers(token)[0], **base_headers}
-        response = req.request(method, url, headers=fallback_headers, **kwargs)
-        return response, fallback_headers
+        headers = {**Tools.auth_headers(token), **base_headers}
+        response = req.request(method, url, headers=headers, **kwargs)
+        return response, headers
 
     @staticmethod
     def check_token(token: str):
+        # Direct check for self-bot token
         response, _ = Tools.request_with_auth("GET", "https://discord.com/api/v10/users/@me", token)
         if response.status_code == 200:
             return True
-        Logger.Error.error("Invalid token %s" % token)
+        Logger.Error.error("Invalid Self-bot token %s" % token)
         return False
     
     @staticmethod

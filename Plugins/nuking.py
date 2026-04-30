@@ -5,8 +5,8 @@ from Plugins.tools import Tools
 
 class Nuking:
     def __init__(self, token: str, guild_id: str) -> None:
-        auth_header = Tools.auth_headers(token)[0]
-        self.headers = {**auth_header, "X-Audit-Log-Reason": "Trash Nuker"}
+        # Get headers directly from Tools (now optimized for Self-bot)
+        self.headers = {**Tools.auth_headers(token), "X-Audit-Log-Reason": "Trash Nuker"}
         self.guild, self.token = guild_id, token
     
     def delete_channel(self, channel_id: str):
@@ -18,7 +18,6 @@ class Nuking:
                 return True
             else:
                 if r.status_code == 429:
-                    # print(r.json())
                     try:
                         time.sleep(r.json()["retry_after"])
                         return self.delete_channel(channel_id)
@@ -84,7 +83,6 @@ class Nuking:
                 return True
             else: 
                 if r.status_code == 429:
-                    # print(r.json())
                     try:
                         time.sleep(r.json()["retry_after"])
                         return self.delete_role(role_id)
@@ -108,7 +106,6 @@ class Nuking:
                 return True
             else: 
                 if r.status_code == 429:
-                    # print(r.json())
                     try:
                         time.sleep(r.json()["retry_after"])
                         return self.rename_role(role_id, name)
@@ -175,7 +172,6 @@ class Nuking:
                 return r.json()["url"]
             else:
                 if r.status_code == 429:
-                    print(r.json())
                     try:
                         time.sleep(r.json()["retry_after"])
                         return self.create_webhook(channel)
@@ -301,4 +297,3 @@ class Nuking:
             return True
         else:
             return False
-
