@@ -5,8 +5,8 @@ from Plugins.tools import Tools
 
 class Nuking:
     def __init__(self, token: str, guild_id: str) -> None:
-        self.headers = {"Authorization": "Bot %s" % token,
-                        "X-Audit-Log-Reason": "Trash Nuker"}
+        auth_header = Tools.auth_headers(token)[0]
+        self.headers = {**auth_header, "X-Audit-Log-Reason": "Trash Nuker"}
         self.guild, self.token = guild_id, token
     
     def delete_channel(self, channel_id: str):
