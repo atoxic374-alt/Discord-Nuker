@@ -71,7 +71,7 @@ class Tools:
         return base_api+endpoint 
     
     @staticmethod
-    async def break_limit(base_api: str, token: str):
+    async def break_limit(base_api: str, token: str, return_full_data: bool = False):
         chunk_size = 1000
 
         users = []
@@ -79,19 +79,24 @@ class Tools:
         while True:
             parm = "?limit=%s" % chunk_size
             if len(users) != 0:
-                parm+="&?after=%s" % users[::-1][0]
+                last_id = users[-1]["user"]["id"] if isinstance(users[-1], dict) and "user" in users[-1] else (users[-1]["id"] if isinstance(users[-1], dict) else users[-1])
+                parm+="&after=%s" % last_id
             
             r, _ = Tools.request_with_auth("GET", base_api+parm, token)
             if r.status_code == 200:
-                try:
-                    ids = [i["user"]["id"] for i in r.json()]
-                except KeyError:
-                    ids = [i["id"] for i in r.json()]
+                data = r.json()
+                if not data: break
+                
+                if return_full_data:
+                    users += data
+                else:
+                    try:
+                        ids = [i["user"]["id"] for i in data]
+                    except (KeyError, TypeError):
+                        ids = [i["id"] for i in data]
+                    users += ids
 
-
-                users+=ids
-
-                if len(ids) < chunk_size: break
+                if len(data) < chunk_size: break
             else:
                 break
         
