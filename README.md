@@ -1,4 +1,4 @@
-# 💀 Bad Discord Nuker 💀
+# Ahmed Discord Nuker
 
 
 <p align="center">
