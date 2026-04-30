@@ -7,24 +7,44 @@ from Plugins.logger import Logger
 
 class Tools:
     @staticmethod
+    def auth_headers(token: str):
+        cleaned = token.strip()
+        return [{"Authorization": cleaned}, {"Authorization": f"Bot {cleaned}"}]
+
+    @staticmethod
+    def request_with_auth(method: str, url: str, token: str, **kwargs):
+        base_headers = kwargs.pop("headers", {})
+        for headers in Tools.auth_headers(token):
+            merged_headers = {**headers, **base_headers}
+            response = req.request(method, url, headers=merged_headers, **kwargs)
+            if response.status_code != 401:
+                return response, merged_headers
+        fallback_headers = {**Tools.auth_headers(token)[0], **base_headers}
+        response = req.request(method, url, headers=fallback_headers, **kwargs)
+        return response, fallback_headers
+
+    @staticmethod
     def check_token(token: str):
-        if req.get("https://discord.com/api/v10/users/@me", headers={"Authorization": "Bot %s" % token}).status_code == 200:
+        response, _ = Tools.request_with_auth("GET", "https://discord.com/api/v10/users/@me", token)
+        if response.status_code == 200:
             return True
-        else:
-            Logger.Error.error("Invalid token %s" % token)
-            return False
+        Logger.Error.error("Invalid token %s" % token)
+        return False
     
     @staticmethod
     def get_guilds(token: str):
-        headers = {"Authorization": "Bot %s" % token , "Content-Type": 'application/json'}
         url = Tools.api("users/@me/guilds")
 
-        request = req.get(url, headers=headers)
+        request, _ = Tools.request_with_auth("GET", url, token, headers={"Content-Type": "application/json"})
 
-        if request.status_code != 200 or len(request.json()) == 0:
-            return False
-        
-        return [[i["id"], i["name"]] for i in request.json()]
+        if request.status_code != 200:
+            return []
+
+        guilds = request.json()
+        if not isinstance(guilds, list) or len(guilds) == 0:
+            return []
+
+        return [[i["id"], i["name"]] for i in guilds]
     
 
 
@@ -57,12 +77,11 @@ class Tools:
         users = []
 
         while True:
-            headers = {"Authorization": "Bot %s" % token}
             parm = "?limit=%s" % chunk_size
             if len(users) != 0:
                 parm+="&?after=%s" % users[::-1][0]
             
-            r = req.get(base_api+parm, headers=headers)
+            r, _ = Tools.request_with_auth("GET", base_api+parm, token)
             if r.status_code == 200:
                 try:
                     ids = [i["user"]["id"] for i in r.json()]
@@ -93,9 +112,7 @@ class Tools:
     @staticmethod
     def information(guild_id: str, token: str):
         url = Tools.api("users/@me")
-        headers = {"Authorization": "Bot %s" % token}
-
-        user = req.get(url, headers=headers)
+        user, headers = Tools.request_with_auth("GET", url, token)
 
         url = Tools.api(f"/guilds/{guild_id}")
         guild = req.get(url, headers=headers)

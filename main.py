@@ -85,7 +85,7 @@ info = None
 
 
 async def main(token: str, guild_id):
-    headers = {"Authorization": "Bot %s" % token, "Content-Type": 'application/json'}
+    headers = {**Tools.auth_headers(token)[0], "Content-Type": "application/json"}
     System.Clear()
     Funcs.print_logo()
     global info
@@ -967,6 +967,9 @@ def start(args):
     print()
 
     guilds = Tools.get_guilds(token)
+    if not guilds:
+        Logger.Error.error("No guilds found or failed to fetch guilds with this token.")
+        return
     num = 1
     
     _guilds = {}
@@ -979,7 +982,8 @@ def start(args):
         num+=1
     
     print()
-    guild = Funcs.get_input("Please Enter the guild id or its number: ", lambda x: x.isnumeric() and (x in str(_guilds) or x in Tools.get_guilds(token)[0] ))
+    guild_ids = [gid for gid, _ in guilds]
+    guild = Funcs.get_input("Please Enter the guild id or its number: ", lambda x: x.isnumeric() and (x in _guilds or x in guild_ids))
 
     if _guilds.get(str(guild)):
         guild = _guilds[guild]
