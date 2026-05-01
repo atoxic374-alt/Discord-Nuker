@@ -1,11 +1,11 @@
 """
 
-- This script is educational and fully coded by M. logique aka @1ogi in discord
+- This script is educational and fully coded by Ahmed in discord
 - if you choose to abuse this tool it's are your fault and M. logique will not accept anything about you're mistake
 
 
 ✨ Bruh Nuker. A defferant nuker that you can enjoy it cool featchurs ✨
-- https://github.com/Bad-Discord/Discord-Nuker
+- discord.gg/ens
 - ⚠ use it on your own purpose
 
 """
@@ -95,7 +95,7 @@ async def main(token: str, guild_id):
         info = Tools.information(guild_id, token)
 
     menu = """
-> github.com/Bad-Discord/Discord-Nuker
+> discord.gg/ens
 
 01. Delete All Channels    08. Webhook Spam Guild     15. Change Guild Icon
 02. Delete All Roles       09. Message Spam Guild     16. Remove all emojis
@@ -119,7 +119,7 @@ async def main(token: str, guild_id):
     print(Colorate.Vertical(Colors.DynamicMIX((Col.light_red, Col.red)), menu))
     num = lambda n: "0"+n if len(n) != 2 else n
     pu, re, bl, pi, ye, gr = Col.purple, Col.red, Col.blue, Col.pink, Fore.YELLOW, Fore.GREEN
-    choice = Funcs.get_input(f"{Col.orange}┌─╼{re}[{palette.grassy_green}${re}] {Col.orange}{info['user']['username']}{palette.red}@{ye}{info['guild']['name']}\n{Col.orange}└────╼{palette.grey} >>{palette.better_purpule} Choose: {Fore.CYAN}", checker=lambda x: x.isnumeric() and int(x) != 0 and int(x) <= 19)
+    choice = Funcs.get_input(f"{Col.orange}[Ahmed]{re} {Col.orange}{info['user']['username']}{palette.red}@{ye}{info['guild']['name']}\n{Col.orange}[Ahmed]{palette.grey} >>{palette.better_purpule} Choose: {Fore.CYAN}", checker=lambda x: x.isnumeric() and int(x) != 0 and int(x) <= 19)
     choice = num(choice)
 
     print()
@@ -967,7 +967,7 @@ def start(args):
 
 
     System.Clear()
-    System.Title("Discord Nuker - github.com/Bad-Discord/Discord-Nuker")
+    System.Title("Ahmed - discord.gg/ens")
     System.Size(160, 40)
 
 
