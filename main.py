@@ -1,10 +1,6 @@
 """
 
 - This script is educational and fully coded by Ahmed in discord
-- if you choose to abuse this tool it's are your fault and M. logique will not accept anything about you're mistake
-
-
-✨ Bruh Nuker. A defferant nuker that you can enjoy it cool featchurs ✨
 - discord.gg/ens
 - ⚠ use it on your own purpose
 
