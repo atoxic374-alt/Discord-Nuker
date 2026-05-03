@@ -13,15 +13,17 @@ palette = Palette()
 class Funcs:
     
     @staticmethod
-    def get_input(text: str, checker = True):
+    def get_input(text: str, checker=lambda _: True):
         
         
         
         text = f"{palette.red}{text}{palette.better_grassy_green}"
 
+        validator = checker if callable(checker) else (lambda _: bool(checker))
+
         v = input(text)
-        if not checker(v):
-            while not checker(v):
+        if not validator(v):
+            while not validator(v):
                 Logger.Error.error("Try Again")
                 v = input(text)
         

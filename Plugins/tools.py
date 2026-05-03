@@ -8,21 +8,27 @@ from Plugins.logger import Logger
 class Tools:
     @staticmethod
     def auth_headers(token: str):
-        cleaned = token.strip()
+        cleaned = str(token).strip() if token is not None else ""
         # Only Self-bot headers (no "Bot " prefix)
         return {"Authorization": cleaned}
 
     @staticmethod
     def request_with_auth(method: str, url: str, token: str, **kwargs):
-        base_headers = kwargs.pop("headers", {})
+        base_headers = kwargs.pop("headers", {}) or {}
         headers = {**Tools.auth_headers(token), **base_headers}
+        kwargs.setdefault("timeout", 15)
         response = req.request(method, url, headers=headers, **kwargs)
         return response, headers
 
     @staticmethod
     def check_token(token: str):
         # Direct check for self-bot token
-        response, _ = Tools.request_with_auth("GET", "https://discord.com/api/v10/users/@me", token)
+        try:
+            response, _ = Tools.request_with_auth("GET", "https://discord.com/api/v10/users/@me", token)
+        except req.RequestException as err:
+            Logger.Error.error(f"Token check failed due to network error: {err}")
+            return False
+
         if response.status_code == 200:
             return True
         Logger.Error.error("Invalid Self-bot token %s" % token)
