@@ -1,16 +1,9 @@
 """
-
-- This script is educational and fully coded by Ahmed in discord
-- if you choose to abuse this tool it's are your fault and M. logique will not accept anything about you're mistake
-
-
-✨ Bruh Nuker. A defferant nuker that you can enjoy it cool featchurs ✨
-- discord.gg/ens
 - ⚠ use it on your own purpose
 
 """
 
-#  CHECKING FOR REQUIREMENTS.
+
 
 import sys, os
 
@@ -48,7 +41,6 @@ else:
 
             sys.exit()
 
-# ============================ MAIN MODULES ============================================
 import requests as req, time, json
 from pystyle import *
 from colorama import Fore
@@ -57,7 +49,6 @@ import asyncio
 from random import choice as choisex
 
 
-# ===============================    CLASSES    =========================================
 
 from Plugins.logger import Logger
 from Plugins.tools import Tools
@@ -66,7 +57,6 @@ from Plugins.funcs import Funcs
 from Plugins.colors import Palette
 
 
-# =============================== SOME VARS ==================================
 
 
 global_timeot = 0.0004
@@ -78,7 +68,6 @@ guild_name = None
 invite_link = None
 
 
-# ============================== MAIN CODE ==========================================
 
 
 info = None
